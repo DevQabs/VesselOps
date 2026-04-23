@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { Vessel } from '@/types/vessel';
+import 'leaflet/dist/leaflet.css';
 
 interface VesselMapProps {
   vessels: Vessel[];
@@ -19,9 +20,14 @@ export default function VesselMap({ vessels, selectedId, onSelectVessel }: Vesse
     if (typeof window === 'undefined' || !mapRef.current) return;
     if (leafletMapRef.current) return;
 
+    let cancelled = false;
+
     (async () => {
       const L = (await import('leaflet')).default;
-      await import('leaflet/dist/leaflet.css');
+
+      if (cancelled || !mapRef.current) return;
+      // Guard against StrictMode double-init after awaits
+      if ((mapRef.current as any)._leaflet_id) return;
 
       const map = L.map(mapRef.current!, {
         center: [20, 0],
@@ -35,17 +41,18 @@ export default function VesselMap({ vessels, selectedId, onSelectVessel }: Vesse
 
       L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
+      if (cancelled) {
+        map.remove();
+        return;
+      }
+
       leafletMapRef.current = map;
 
-      vessels.forEach(vessel => {
-        const isSelected = vessel.id === selectedId;
-        const marker = createMarker(L, vessel, isSelected);
-        marker.addTo(map).on('click', () => onSelectVessel(vessel));
-        markersRef.current.set(vessel.id, marker);
-      });
+      // initial marker population skipped — synced by the vessels effect below
     })();
 
     return () => {
+      cancelled = true;
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
@@ -54,16 +61,34 @@ export default function VesselMap({ vessels, selectedId, onSelectVessel }: Vesse
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update markers when selection changes
+  // Sync markers whenever vessels or selection changes
   useEffect(() => {
     if (!leafletMapRef.current) return;
     (async () => {
       const L = (await import('leaflet')).default;
+      const map = leafletMapRef.current;
+      if (!map) return;
+
+      const currentIds = new Set(vessels.map(v => v.id));
+
+      // Remove stale markers
       markersRef.current.forEach((marker, id) => {
-        const vessel = vessels.find(v => v.id === id);
-        if (!vessel) return;
-        const isSelected = id === selectedId;
-        marker.setIcon(buildIcon(L, isSelected));
+        if (!currentIds.has(id)) {
+          marker.remove();
+          markersRef.current.delete(id);
+        }
+      });
+
+      // Add new markers or update icon for existing ones
+      vessels.forEach(vessel => {
+        const isSelected = vessel.id === selectedId;
+        if (markersRef.current.has(vessel.id)) {
+          markersRef.current.get(vessel.id).setIcon(buildIcon(L, isSelected));
+        } else {
+          const marker = createMarker(L, vessel, isSelected);
+          marker.addTo(map).on('click', () => onSelectVessel(vessel));
+          markersRef.current.set(vessel.id, marker);
+        }
       });
 
       if (selectedId) {

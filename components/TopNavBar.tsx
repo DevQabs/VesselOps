@@ -6,10 +6,11 @@ import { SyncOutlined, BellOutlined, UserOutlined } from '@ant-design/icons';
 interface TopNavBarProps {
   lastSynced: string;
   onSync: () => void;
+  syncing?: boolean;
   isMobile?: boolean;
 }
 
-export default function TopNavBar({ lastSynced, onSync, isMobile }: TopNavBarProps) {
+export default function TopNavBar({ lastSynced, onSync, syncing = false, isMobile }: TopNavBarProps) {
   return (
     <header
       style={{
@@ -92,8 +93,9 @@ export default function TopNavBar({ lastSynced, onSync, isMobile }: TopNavBarPro
           <Button
             type="text"
             shape="circle"
-            icon={<SyncOutlined />}
+            icon={<SyncOutlined spin={syncing} />}
             onClick={onSync}
+            disabled={syncing}
             style={{ color: '#000d22' }}
           />
         </Tooltip>

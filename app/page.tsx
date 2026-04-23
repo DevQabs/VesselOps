@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { ConfigProvider } from 'antd';
-import { mockVessels } from '@/data/mockVessels';
+import { fetchVessels, syncVessels } from '@/lib/api';
 import { Vessel } from '@/types/vessel';
 import TopNavBar from '@/components/TopNavBar';
 import VesselList from '@/components/VesselList';
@@ -25,29 +25,51 @@ function useIsMobile() {
 }
 
 export default function DashboardPage() {
-  const [selectedVessel, setSelectedVessel] = useState<Vessel>(mockVessels[0]);
-  const [lastSynced, setLastSynced] = useState('2 minutes ago');
+  const [vessels, setVessels] = useState<Vessel[]>([]);
+  const [selectedVessel, setSelectedVessel] = useState<Vessel | null>(null);
+  const [lastSynced, setLastSynced] = useState('—');
+  const [syncing, setSyncing] = useState(false);
   const isMobile = useIsMobile();
 
-  const handleSync = useCallback(() => {
-    setLastSynced('Just now');
-    setTimeout(() => setLastSynced('1 minute ago'), 60000);
+  const loadVessels = useCallback(async () => {
+    try {
+      const data = await fetchVessels();
+      setVessels(data);
+      if (!selectedVessel && data.length > 0) setSelectedVessel(data[0]);
+      setLastSynced('Just now');
+    } catch {
+      // keep stale data on error
+    }
+  }, [selectedVessel]);
+
+  useEffect(() => {
+    loadVessels();
   }, []);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      await syncVessels();
+      await loadVessels();
+    } finally {
+      setSyncing(false);
+    }
+  }, [loadVessels]);
 
   if (isMobile) {
     return (
       <ConfigProvider theme={{ token: { colorPrimary: '#000d22', borderRadius: 12 } }}>
         <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#f8f9ff', overflow: 'hidden' }}>
-          <TopNavBar lastSynced={lastSynced} onSync={handleSync} isMobile />
+          <TopNavBar lastSynced={lastSynced} onSync={handleSync} syncing={syncing} isMobile />
           <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             <VesselMap
-              vessels={mockVessels}
+              vessels={vessels}
               selectedId={selectedVessel?.id ?? null}
               onSelectVessel={setSelectedVessel}
             />
           </main>
           <MobileBottomSheet
-            vessels={mockVessels}
+            vessels={vessels}
             selectedVessel={selectedVessel}
             onSelect={setSelectedVessel}
           />
@@ -60,16 +82,16 @@ export default function DashboardPage() {
   return (
     <ConfigProvider theme={{ token: { colorPrimary: '#000d22', borderRadius: 12 } }}>
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f8f9ff', overflow: 'hidden' }}>
-        <TopNavBar lastSynced={lastSynced} onSync={handleSync} />
+        <TopNavBar lastSynced={lastSynced} onSync={handleSync} syncing={syncing} />
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           <VesselList
-            vessels={mockVessels}
+            vessels={vessels}
             selectedId={selectedVessel?.id ?? null}
             onSelect={setSelectedVessel}
           />
           <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             <VesselMap
-              vessels={mockVessels}
+              vessels={vessels}
               selectedId={selectedVessel?.id ?? null}
               onSelectVessel={setSelectedVessel}
             />
