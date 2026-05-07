@@ -43,10 +43,10 @@ export default function TopNavBar({ lastSynced, onSync, syncing = false, isMobil
         </span>
         {!isMobile && (
           <nav style={{ display: 'flex', gap: 24 }}>
-            {['Fleet', 'Voyages', 'Ports', 'Compliance'].map((item, i) => (
+            {['Fleet'].map((item, i) => (
               <a
                 key={item}
-                href="#"
+                href='#'
                 style={{
                   fontFamily: 'Manrope, sans-serif',
                   fontWeight: i === 0 ? 700 : 500,
@@ -77,33 +77,49 @@ export default function TopNavBar({ lastSynced, onSync, syncing = false, isMobil
             }}
           >
             <SyncOutlined style={{ fontSize: 12, color: '#498ae6' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#498ae6', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: '#498ae6',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}
+            >
               Live
             </span>
           </div>
         ) : (
           <div style={{ textAlign: 'right', marginRight: 8 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#44474e', fontWeight: 700 }}>
+            <div
+              style={{
+                fontSize: 10,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: '#44474e',
+                fontWeight: 700,
+              }}
+            >
               Operational Status
             </div>
             <div style={{ fontSize: 11, color: '#324768' }}>Last synced: {lastSynced}</div>
           </div>
         )}
-        <Tooltip title="Sync">
+        <Tooltip title='Sync'>
           <Button
-            type="text"
-            shape="circle"
+            type='text'
+            shape='circle'
             icon={<SyncOutlined spin={syncing} />}
             onClick={onSync}
             disabled={syncing}
             style={{ color: '#000d22' }}
           />
         </Tooltip>
-        <Tooltip title="Notifications">
-          <Button type="text" shape="circle" icon={<BellOutlined />} style={{ color: '#000d22' }} />
+        <Tooltip title='Notifications'>
+          <Button type='text' shape='circle' icon={<BellOutlined />} style={{ color: '#000d22' }} />
         </Tooltip>
-        <Tooltip title="Account">
-          <Button type="text" shape="circle" icon={<UserOutlined />} style={{ color: '#000d22' }} />
+        <Tooltip title='Account'>
+          <Button type='text' shape='circle' icon={<UserOutlined />} style={{ color: '#000d22' }} />
         </Tooltip>
       </div>
     </header>

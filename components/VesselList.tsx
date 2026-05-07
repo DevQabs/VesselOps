@@ -52,17 +52,12 @@ export default function VesselList({ vessels, selectedId, onSelect }: VesselList
           gap: 4,
         }}
       >
-        {vessels.map(v => (
-          <VesselCard
-            key={v.id}
-            vessel={v}
-            selected={v.id === selectedId}
-            onClick={() => onSelect(v)}
-          />
+        {vessels.map((v) => (
+          <VesselCard key={v.id} vessel={v} selected={v.id === selectedId} onClick={() => onSelect(v)} />
         ))}
       </div>
 
-      <div style={{ padding: 16, borderTop: '1px solid rgba(196,198,207,0.1)' }}>
+      {/* <div style={{ padding: 16, borderTop: '1px solid rgba(196,198,207,0.1)' }}>
         <button
           style={{
             width: '100%',
@@ -84,7 +79,7 @@ export default function VesselList({ vessels, selectedId, onSelect }: VesselList
           <PlusOutlined />
           Register New Vessel
         </button>
-      </div>
+      </div> */}
     </aside>
   );
 }
